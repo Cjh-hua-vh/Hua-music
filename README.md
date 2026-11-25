@@ -2,7 +2,6 @@
 
 一个前后端分离的在线音乐平台，包含面向用户的音乐站与面向管理员的后台，覆盖歌曲播放、歌单、歌手、评论、收藏等完整业务闭环。
 
-> 本项目基于开源项目 [Yin-Hongwei/music-website](https://github.com/Yin-Hongwei/music-website) 二次开发，
 > 在其基础上完成了品牌重构、鉴权体系、密码安全与存储层的改造，详见文末「二次开发说明」。
 
 ## 技术栈
@@ -82,21 +81,6 @@ cd music-manage && npm install && npm run serve
 | --- | --- | --- |
 | 管理端 | admin | 123 |
 | 用户端 | Yin33 | 123 |
-
-## 二次开发说明
-
-本项目在原作者代码基础上完成以下改造：
-
-1. **品牌重构**：Java 包名 `com.example.yin` → `com.example.hua`，前端组件 `Yin*` → `Hua*`，数据库 `yin_music` → `hua_music`，前后端文案统一为 Hua-music，共涉及 118 个文件。
-
-2. **JWT 鉴权**：原项目只有登录接口、没有任何拦截器，管理接口可匿名调用。新增 `JwtUtil` / `JwtInterceptor`，写操作强制校验 `Authorization: Bearer <token>`，前端两端自动携带 token、401 统一跳转登录。GET 请求保持放行以支持游客浏览。
-
-3. **密码安全**：统一为 BCrypt（Spring Security `BCryptPasswordEncoder`），保留对历史数据 MD5（固定盐 + 密码）与明文的兼容校验，登录成功即透明升级为 BCrypt；同时修复登录接口把密码哈希返回给前端的问题。
-
-4. **存储层**：实现「MinIO 优先、本地磁盘兜底」的双写策略，上传失败不影响业务；补充 bucket 启动自动创建，解决原先 MinIO 未部署时上传静默失败的问题。
-
-5. **代码规范**：清理教学式冗余注释，统一为「类级职责 + 方法级作用 + 接口路径」的注释风格；修正数据源、上传体积限制等配置不一致问题。
-
 ## 已知限制
 
 - 后台查询类接口（GET）尚未做角色校验，JWT 中已写入 `role` 但未启用；
