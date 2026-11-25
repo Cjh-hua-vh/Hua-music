@@ -1,0 +1,9 @@
+package com.example.hua.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.example.hua.model.domain.SingerStyle;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface SingerStyleMapper extends BaseMapper<SingerStyle> {
+}

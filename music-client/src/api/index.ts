@@ -1,0 +1,16 @@
+/** API 层统一出口：页面组件一律从 "@/api" 引入 */
+export { api, getBaseURL, getBlob } from "@/utils/request";
+
+export type { ApiRequestOptions, ApiResponse, HttpMethod } from "@/utils/request";
+export type { PagedResult } from "@/utils/api-response-data";
+
+export * from "./types";
+export * from "./models";
+export * from "./banner";
+export * from "./singer";
+export * from "./songSheet";
+export * from "./listSong";
+export * from "./song";
+export * from "./auth";
+export * from "./comment";
+export * from "./user";

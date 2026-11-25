@@ -1,0 +1,113 @@
+<template>
+  <el-breadcrumb class="crumbs" separator="/">
+    <el-breadcrumb-item v-for="item in breadcrumbList" :key="item.name" :to="{ path: item.path, query: item.query }">
+      {{ item.name }}
+    </el-breadcrumb-item>
+  </el-breadcrumb>
+
+  <div class="container">
+    <div class="handle-box">
+      <el-button @click="deleteAll">批量删除</el-button>
+      <el-input v-model="searchWord" placeholder="筛选关键词"></el-input>
+    </div>
+
+    <el-table height="550px" border size="small" :data="tableData" @selection-change="handleSelectionChange">
+      <el-table-column type="selection" width="40" align="center"></el-table-column>
+      <el-table-column prop="id" label="ID" width="50"></el-table-column>
+      <el-table-column prop="username" label="用户" width="80"></el-table-column>
+      <el-table-column prop="content" label="评论内容"></el-table-column>
+      <el-table-column label="操作" width="100" align="center">
+        <template v-slot="scope">
+          <el-button type="danger" @click="deleteRow(scope.row.id)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+  </div>
+
+  <hua-del-dialog :delVisible="delVisible" @confirm="confirm" @cancelRow="delVisible = $event"></hua-del-dialog>
+</template>
+
+<script lang="ts">
+
+import { defineComponent, getCurrentInstance, watch, ref, computed } from "vue";
+import { useRoute } from "vue-router";
+import { useAppStore } from "@/stores/app";
+import { getCommentOfSongId, getCommentOfSongListId, getUserOfId, deleteComment } from "@/api";
+import HuaDelDialog from "@/components/dialog/HuaDelDialog.vue";
+
+export default defineComponent({
+  components: { HuaDelDialog },
+  setup() {
+    const { proxy } = getCurrentInstance();
+    const route = useRoute();
+    const appStore = useAppStore();
+
+    const tableData = ref([]);
+    const tempDate = ref([]);
+    const breadcrumbList = computed(() => appStore.breadcrumbList);
+
+    const searchWord = ref("");
+    watch(searchWord, () => {
+      if (searchWord.value === "") {
+        tableData.value = tempDate.value;
+      } else {
+        tableData.value = [];
+        for (let item of tempDate.value) {
+          if (item.username.includes(searchWord.value)) {
+            tableData.value.push(item);
+          }
+        }
+      }
+    });
+
+    getData();
+
+    function getData() {
+      tableData.value = [];
+      tempDate.value = [];
+      let promise = null;
+      if (route.query.type == "0") {
+        promise = getCommentOfSongId(route.query.id);
+      } else if (route.query.type == "1") {
+        promise = getCommentOfSongListId(route.query.id);
+      }
+
+      promise.then((res) => {
+        for (let item of (res as ResponseBody).data) {
+          getUsers(item.userId, item);
+        }
+      });
+    }
+
+    async function getUsers(id, item) {
+      const result = (await getUserOfId(id)) as ResponseBody;
+      item.username = result && result.data ? result.data.username : "";
+      tableData.value.push(item);
+      tempDate.value.push(item);
+    }
+
+    const idx = ref(-1);
+    const multipleSelection = ref([]);
+    const delVisible = ref(false);
+
+    async function confirm() {
+      const result = (await deleteComment(idx.value)) as ResponseBody;
+      (proxy as any).$message({ message: result.message, type: result.type });
+      if (result.success) getData();
+      delVisible.value = false;
+    }
+
+    function deleteRow(id) { idx.value = id; delVisible.value = true; }
+    function handleSelectionChange(val) { multipleSelection.value = val; }
+
+    function deleteAll() {
+      for (let item of multipleSelection.value) { deleteRow(item.id); confirm(); }
+      multipleSelection.value = [];
+    }
+
+    return { searchWord, tableData, delVisible, breadcrumbList, deleteAll, handleSelectionChange, deleteRow, confirm };
+  },
+});
+</script>
+
+<style scoped></style>
